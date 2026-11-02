@@ -22,6 +22,7 @@
   .ok{display:none;color:#1a7f37;font-weight:700;margin-top:8px;text-align:center}
   .note{font-size:14px;color:var(--muted)}
   code{background:#eeeee9;padding:1px 5px;border-radius:4px;font-size:.9em}
+  .kind{font-weight:700;margin-bottom:10px}
   .warn{border-left:4px solid var(--fg);padding:4px 0 4px 12px;font-size:14px}
 </style>
 </head>
@@ -30,53 +31,76 @@
   <h1>カート追加ツール</h1>
   <p class="lead">escape.id のイベントページで、指定時刻にチケットをカートへ追加します（ブックマークレット版・<span id="ver">__VERSION__</span>）</p>
 
+  <h2>ブックマークレット</h2>
   <div class="card">
-    <button id="copy">ブックマークレットをコピー</button>
-    <div class="ok" id="ok">コピーしました</div>
-    <a class="drag" id="drag" href="#">PC：このボタンをブックマークバーへドラッグ</a>
-    <textarea id="code" readonly></textarea>
+    <div class="kind">1日程版 <span class="note">— 開いているページの日程だけ</span></div>
+    <button data-copy="single">1日程版をコピー</button>
+    <div class="ok" data-ok="single">コピーしました</div>
+    <a class="drag" data-drag="single" href="#">PC：ブックマークバーへドラッグ</a>
+    <textarea data-code="single" readonly></textarea>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <div class="kind">複数日程版 <span class="note">— 複数の日程をまとめて同時に実行</span></div>
+    <button data-copy="multi">複数日程版をコピー</button>
+    <div class="ok" data-ok="multi">コピーしました</div>
+    <a class="drag" data-drag="multi" href="#">PC：ブックマークバーへドラッグ</a>
+    <textarea data-code="multi" readonly></textarea>
   </div>
 
   <h2>iPhone（Safari）への登録</h2>
   <ol>
-    <li>上の「ブックマークレットをコピー」を押す</li>
-    <li>このページを開いたまま、共有ボタン →「ブックマークを追加」で保存する（名前は <code>カート追加</code> など）</li>
+    <li>上の「コピー」ボタンを押す</li>
+    <li>このページを開いたまま、共有ボタン →「ブックマークを追加」で保存する（名前は <code>カート追加</code>、<code>カート追加複数</code> など）</li>
     <li>ブックマーク一覧を開き「編集」→ いま保存したブックマークを選ぶ</li>
     <li>アドレス欄の中身を全部消して、コピーした内容を貼り付けて保存</li>
   </ol>
-  <p class="note">Android（Chrome）も同じ要領でブックマークを作り、URL をコピーした内容に置き換えます。</p>
+  <p class="note">2つとも使う場合は、この手順をそれぞれ行います。Android（Chrome）も同じ要領でブックマークを作り、URL をコピーした内容に置き換えます。</p>
 
-  <h2>使い方</h2>
+  <h2>使い方（1日程版）</h2>
   <ol>
     <li>escape.id にログインし、イベントページで<strong>日付と時間</strong>を選ぶ（URL に <code>?d=…&amp;u=…</code> が付いた状態）</li>
     <li>Safari：ブックマーク一覧から <code>カート追加</code> をタップ<br>
         Chrome：アドレスバーに <code>カート追加</code> と入力し、候補のブックマークをタップ</li>
-    <li>画面下にパネルが出るので、プラン・枚数・開始時刻（販売開始時刻が自動で入ります）を確認して「開始」</li>
+    <li>画面下のパネルで、プラン・枚数・開始時刻（販売開始時刻が自動で入ります）を確認して「開始」</li>
     <li>成功したらカートを開いて購入手続きへ</li>
   </ol>
+
+  <h2>使い方（複数日程版）</h2>
+  <ol>
+    <li>escape.id にログインし、狙う日程のページで<strong>日付と時間</strong>を選んで <code>カート追加複数</code> を実行 →「このページの日程を追加」</li>
+    <li>他の日程も、ページを移動してブックマークを実行 →「このページの日程を追加」を繰り返す<br>
+        （URL が手元にあれば「URLをまとめて追加」に1行1つ貼り付けても OK）</li>
+    <li>日程ごとにプラン・枚数・開始時刻を確認。実行しない日程はチェックを外す</li>
+    <li>どれか1つの escape.id のページを開いた状態で「開始」。全日程が並行して動きます</li>
+  </ol>
+  <p class="note">登録した日程は escape.id 側のブラウザに保存されるので、次にブックマークを実行したときも残っています。不要になった日程は「削除」で消せます。</p>
 
   <h2>注意</h2>
   <div class="warn">
     <p>開始時刻まで<strong>そのページを開いたまま、画面をつけておいてください</strong>。iPhone はアプリを切り替えたり画面を消したりするとタイマーが止まります（対応端末では画面スリープを自動で防ぎます）。</p>
-    <p>入力内容（プラン名・枚数・再試行設定）は escape.id 側のブラウザに保存されます。パスワードは扱いません。</p>
+    <p>入力内容（日程・プラン名・枚数・再試行設定）は escape.id 側のブラウザに保存されます。パスワードは扱いません。</p>
   </div>
 </main>
 <script>
-  var BOOKMARKLET = __BOOKMARKLET__;
-  var code = document.getElementById("code");
-  code.value = BOOKMARKLET;
-  document.getElementById("drag").setAttribute("href", BOOKMARKLET);
-  document.getElementById("drag").addEventListener("click", function (e) {
-    e.preventDefault();
-    alert("PC ではこのボタンをブックマークバーへドラッグしてください。");
-  });
-  document.getElementById("copy").addEventListener("click", function () {
-    function done() { document.getElementById("ok").style.display = "block"; }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(BOOKMARKLET).then(done, function () { code.select(); document.execCommand("copy"); done(); });
-    } else {
-      code.select(); document.execCommand("copy"); done();
-    }
+  var CODES = { single: __BOOKMARKLET__, multi: __BOOKMARKLET_MULTI__ };
+  Object.keys(CODES).forEach(function (k) {
+    var code = document.querySelector('[data-code="' + k + '"]');
+    var drag = document.querySelector('[data-drag="' + k + '"]');
+    code.value = CODES[k];
+    drag.setAttribute("href", CODES[k]);
+    drag.addEventListener("click", function (e) {
+      e.preventDefault();
+      alert("PC ではこのボタンをブックマークバーへドラッグしてください。");
+    });
+    document.querySelector('[data-copy="' + k + '"]').addEventListener("click", function () {
+      function done() {
+        document.querySelectorAll(".ok").forEach(function (el) { el.style.display = "none"; });
+        document.querySelector('[data-ok="' + k + '"]').style.display = "block";
+      }
+      function fallback() { code.select(); document.execCommand("copy"); done(); }
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(CODES[k]).then(done, fallback);
+      else fallback();
+    });
   });
 </script>
 </body>
