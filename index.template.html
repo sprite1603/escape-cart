@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>カート追加ツール</title>
+<style>
+  :root{--fg:#141414;--muted:#6b6b6b;--line:#dcdcdc;--bg:#fafaf7;--card:#fff;--accent:#141414}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif}
+  main{max-width:640px;margin:0 auto;padding:28px 18px 60px}
+  h1{font-size:24px;margin:0 0 4px;letter-spacing:.02em}
+  .lead{color:var(--muted);margin:0 0 24px;font-size:14px}
+  h2{font-size:17px;margin:32px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--fg)}
+  ol{padding-left:1.4em;margin:0}
+  li{margin:0 0 12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  button,.drag{display:inline-block;width:100%;padding:14px;border-radius:10px;border:2px solid var(--fg);background:var(--fg);color:#fff;font-family:inherit;font-weight:700;font-size:16px;line-height:1.3;text-align:center;text-decoration:none;cursor:pointer}
+  .drag{background:#fff;color:var(--fg);margin-top:10px}
+  textarea{width:100%;height:84px;margin-top:10px;font:11px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:8px;padding:8px;color:var(--muted);background:#f4f4f1}
+  .ok{display:none;color:#1a7f37;font-weight:700;margin-top:8px;text-align:center}
+  .note{font-size:14px;color:var(--muted)}
+  code{background:#eeeee9;padding:1px 5px;border-radius:4px;font-size:.9em}
+  .warn{border-left:4px solid var(--fg);padding:4px 0 4px 12px;font-size:14px}
+</style>
+</head>
+<body>
+<main>
+  <h1>カート追加ツール</h1>
+  <p class="lead">escape.id のイベントページで、指定時刻にチケットをカートへ追加します（ブックマークレット版・<span id="ver">__VERSION__</span>）</p>
+
+  <div class="card">
+    <button id="copy">ブックマークレットをコピー</button>
+    <div class="ok" id="ok">コピーしました</div>
+    <a class="drag" id="drag" href="#">PC：このボタンをブックマークバーへドラッグ</a>
+    <textarea id="code" readonly></textarea>
+  </div>
+
+  <h2>iPhone（Safari）への登録</h2>
+  <ol>
+    <li>上の「ブックマークレットをコピー」を押す</li>
+    <li>このページを開いたまま、共有ボタン →「ブックマークを追加」で保存する（名前は <code>カート追加</code> など）</li>
+    <li>ブックマーク一覧を開き「編集」→ いま保存したブックマークを選ぶ</li>
+    <li>アドレス欄の中身を全部消して、コピーした内容を貼り付けて保存</li>
+  </ol>
+  <p class="note">Android（Chrome）も同じ要領でブックマークを作り、URL をコピーした内容に置き換えます。</p>
+
+  <h2>使い方</h2>
+  <ol>
+    <li>escape.id にログインし、イベントページで<strong>日付と時間</strong>を選ぶ（URL に <code>?d=…&amp;u=…</code> が付いた状態）</li>
+    <li>Safari：ブックマーク一覧から <code>カート追加</code> をタップ<br>
+        Chrome：アドレスバーに <code>カート追加</code> と入力し、候補のブックマークをタップ</li>
+    <li>画面下にパネルが出るので、プラン・枚数・開始時刻（販売開始時刻が自動で入ります）を確認して「開始」</li>
+    <li>成功したらカートを開いて購入手続きへ</li>
+  </ol>
+
+  <h2>注意</h2>
+  <div class="warn">
+    <p>開始時刻まで<strong>そのページを開いたまま、画面をつけておいてください</strong>。iPhone はアプリを切り替えたり画面を消したりするとタイマーが止まります（対応端末では画面スリープを自動で防ぎます）。</p>
+    <p>入力内容（プラン名・枚数・再試行設定）は escape.id 側のブラウザに保存されます。パスワードは扱いません。</p>
+  </div>
+</main>
+<script>
+  var BOOKMARKLET = __BOOKMARKLET__;
+  var code = document.getElementById("code");
+  code.value = BOOKMARKLET;
+  document.getElementById("drag").setAttribute("href", BOOKMARKLET);
+  document.getElementById("drag").addEventListener("click", function (e) {
+    e.preventDefault();
+    alert("PC ではこのボタンをブックマークバーへドラッグしてください。");
+  });
+  document.getElementById("copy").addEventListener("click", function () {
+    function done() { document.getElementById("ok").style.display = "block"; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(BOOKMARKLET).then(done, function () { code.select(); document.execCommand("copy"); done(); });
+    } else {
+      code.select(); document.execCommand("copy"); done();
+    }
+  });
+</script>
+</body>
+</html>
