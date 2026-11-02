@@ -188,6 +188,7 @@
     P + " .st{margin-top:6px;font-weight:700}" +
     P + " .muted{color:rgb(110,110,110);font-size:12px}" +
     P + " .log{margin-top:8px;background:rgb(244,244,244);border-radius:6px;padding:6px 8px;font:12px/1.4 ui-monospace,Menlo,monospace;max-height:160px;overflow:auto;white-space:pre-wrap;word-break:break-all}" +
+    P + " .bulk{margin-top:10px;padding:8px 10px;background:rgb(246,246,243);border-radius:8px}" +
     P + " details{margin-top:8px}" + P + " summary{font-weight:700;font-size:13px}" +
     "</style>" +
     '<h3><span>カート追加ツール（複数日程）</span><button class="x" data-act="hide">×</button></h3>' +
@@ -195,6 +196,9 @@
     "<details><summary>URLをまとめて追加</summary>" +
     '<textarea data-f="urls" placeholder="日付と時間を選んだあとのURLを1行に1つ"></textarea>' +
     '<div class="btns"><button data-act="addurls">URLから追加</button></div></details>' +
+    '<div class="bulk"><label>開始時刻を一括設定（チェックした日程）</label>' +
+    '<input data-f="bulk" type="datetime-local" step="1">' +
+    '<div class="btns" style="margin-top:6px"><button data-act="bulkapply">一括適用</button><button data-act="bulkreset">販売開始時刻に戻す</button></div></div>' +
     '<div class="list"></div>' +
     '<div class="row"><div><label>再試行（回）</label><input data-f="rounds" type="number" min="1" value="20" inputmode="numeric"></div>' +
     '<div><label>間隔（分）</label><input data-f="interval" type="number" min="1" value="9" inputmode="numeric"></div></div>' +
@@ -213,10 +217,35 @@
   var slots = [];         // {url, uuid, slot, event, saved, el, plan(), label}
   var running = false, stopFlag = false, wakeLock = null;
 
+  function defaultTarget(slot) {
+    var sales = slot.salesStartAt ? new Date(slot.salesStartAt) : null;
+    return sales && sales > new Date() ? sales : new Date(Date.now() + 10000);
+  }
+
+  function enabledSlots() {
+    return slots.filter(function (s) { return !s.error && s.el && s.el.querySelector('[data-s="enabled"]').checked; });
+  }
+
+  function bulkApply() {
+    var v = q('[data-f="bulk"]').value;
+    if (!v || isNaN(new Date(v))) { alert("一括設定する開始時刻を入力してください。"); return; }
+    var targets = enabledSlots();
+    if (!targets.length) { alert("チェックの入った日程がありません。"); return; }
+    targets.forEach(function (s) { s.el.querySelector('[data-s="target"]').value = v; });
+    log(targets.length + " 件の開始時刻を " + v.replace("T", " ") + " にしました。");
+  }
+
+  function bulkReset() {
+    var targets = enabledSlots();
+    if (!targets.length) { alert("チェックの入った日程がありません。"); return; }
+    targets.forEach(function (s) { s.el.querySelector('[data-s="target"]').value = toLocalInput(defaultTarget(s.slot)); });
+    log(targets.length + " 件の開始時刻を販売開始時刻に戻しました。");
+  }
+
   function renderSlot(s) {
     var plans = s.slot.plans || [];
     var sales = s.slot.salesStartAt ? new Date(s.slot.salesStartAt) : null;
-    var target = sales && sales > new Date() ? sales : new Date(Date.now() + 10000);
+    var target = defaultTarget(s.slot);
     var el = document.createElement("div");
     el.className = "card";
     var inqHtml = "";
@@ -308,7 +337,13 @@
       return p.then(function () {
         return addSlot(url, savedMap && savedMap[url]).catch(function (e) { log("失敗: " + e.message); });
       });
-    }, Promise.resolve()).then(function () { saveStore(); updateButtons(); });
+    }, Promise.resolve()).then(function () {
+      var bulk = q('[data-f="bulk"]');
+      var first = slots.filter(function (s) { return !s.error && s.el; })[0];
+      if (!bulk.value && first) bulk.value = first.el.querySelector('[data-s="target"]').value;
+      saveStore();
+      updateButtons();
+    });
   }
 
   function updateButtons() {
@@ -316,6 +351,8 @@
     q('[data-act="stop"]').disabled = !running;
     q('[data-act="addhere"]').disabled = running;
     q('[data-act="addurls"]').disabled = running;
+    q('[data-act="bulkapply"]').disabled = running;
+    q('[data-act="bulkreset"]').disabled = running;
   }
 
   // ---------- 実行 ----------
@@ -433,6 +470,8 @@
     var act = ev.target.getAttribute && ev.target.getAttribute("data-act");
     if (act === "start") start();
     else if (act === "stop") { stopFlag = true; log("停止します..."); }
+    else if (act === "bulkapply") bulkApply();
+    else if (act === "bulkreset") bulkReset();
     else if (act === "addhere") {
       if (!slotUuidOf(location.href)) { alert("日付と時間を選んだページで押してください（URL に u=... が必要です）。"); return; }
       addMany([location.href]);
