@@ -153,6 +153,7 @@
           url: s.url,
           enabled: s.el && !s.error ? s.el.querySelector('[data-s="enabled"]').checked : s.saved.enabled !== false,
           planName: s.plan && s.plan() ? s.plan().planName : s.saved.planName,
+          planChosen: s.planChosen != null ? s.planChosen : !!s.saved.planChosen,
           qty: s.el && !s.error ? s.el.querySelector('[data-s="qty"]').value : s.saved.qty
         };
       })
@@ -269,7 +270,13 @@
       inqHtml +
       '<div class="st" data-s="status"></div>';
     var sel = el.querySelector('[data-s="plan"]');
-    plans.forEach(function (p, i) { if (p.planName === s.saved.planName) sel.value = String(i); });
+    // 初期値はグループチケット。自分で選び直したプランだけ次回も使う
+    var def = -1;
+    plans.forEach(function (p, i) { if (def < 0 && String(p.planName || "").indexOf("グループ") >= 0) def = i; });
+    sel.value = String(def < 0 ? 0 : def);
+    s.planChosen = !!s.saved.planChosen;
+    if (s.planChosen) plans.forEach(function (p, i) { if (p.planName === s.saved.planName) sel.value = String(i); });
+    sel.addEventListener("change", function () { s.planChosen = true; });
     s.plan = function () { return plans[Number(sel.value)]; };
     s.el = el;
     s.setStatus = function (t) { el.querySelector('[data-s="status"]').textContent = t; };

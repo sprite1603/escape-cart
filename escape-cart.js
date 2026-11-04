@@ -223,9 +223,15 @@
       sel.innerHTML = plans.map(function (p, i) {
         return '<option value="' + i + '">' + esc(p.planName) + "（" + esc(p.unitPrice) + "円）</option>";
       }).join("");
-      if (saved.planName) {
+      // 初期値はグループチケット。自分で選び直したプランだけ次回も使う
+      var def = -1;
+      plans.forEach(function (p, i) { if (def < 0 && String(p.planName || "").indexOf("グループ") >= 0) def = i; });
+      sel.value = String(def < 0 ? 0 : def);
+      state.planChosen = !!saved.planChosen;
+      if (state.planChosen && saved.planName) {
         plans.forEach(function (p, i) { if (p.planName === saved.planName) sel.value = String(i); });
       }
+      sel.addEventListener("change", function () { state.planChosen = true; });
       if (saved.qty) q('[data-f="qty"]').value = saved.qty;
       if (saved.rounds) q('[data-f="rounds"]').value = saved.rounds;
       if (saved.interval) q('[data-f="interval"]').value = saved.interval;
@@ -337,7 +343,7 @@
       inquiryAnswers: inq.answers,
       productListings: []
     };
-    saveSettings({ planName: plan.planName, qty: qty, rounds: rounds, interval: interval });
+    saveSettings({ planName: plan.planName, planChosen: !!state.planChosen, qty: qty, rounds: rounds, interval: interval });
     log("payload: " + JSON.stringify(payload));
 
     state.running = true;
